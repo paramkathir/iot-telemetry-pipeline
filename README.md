@@ -7,22 +7,14 @@ infrastructure is also fully reproducible via Terraform (Infrastructure as Code)
 
 ## Architecture
 
-```
- [ EDGE LAYER ]              [ NETWORK ]                [ CLOUD INGEST & PROCESSING ]
-
-  Edge Client          Encrypted MQTT/TLS                    AWS IoT Core
- (Python sim /   ───►   (mTLS, port 8883)   ───►         (Broker + SQL Rule)
-   ESP32)                                                        │
-                                                                  ▼ trigger
-                                                            AWS Lambda
-                                                        (Python data parser)
-                                                                  │
-                                                                  ▼ PutItem
-                                                            Amazon DynamoDB
-                                                          (time-series NoSQL)
+```mermaid
+flowchart LR
+    A[Edge Client<br/>Python sim / ESP32] -->|Encrypted MQTT/TLS<br/>mTLS, port 8883| B[AWS IoT Core<br/>Broker + SQL Rule]
+    B -->|trigger| C[AWS Lambda<br/>Python data parser]
+    C -->|PutItem| D[Amazon DynamoDB<br/>time-series NoSQL]
 ```
 
-**Security model:** the edge client authenticates using mutual TLS — it presents an
+**Security model:** the edge client authenticates using mutual TLS. It presents an
 X.509 device certificate and private key issued by AWS IoT Core, and validates AWS's
 server certificate against the Amazon Root CA. An IoT policy scopes exactly what the
 device is allowed to do (`iot:Connect`, `iot:Publish` on a single topic).
@@ -32,8 +24,8 @@ device is allowed to do (`iot:Connect`, `iot:Publish` on a single topic).
 | Path | Purpose |
 |---|---|
 | `edge_telemetry_simulator.py` | Simulated edge device. Generates realistic drifting sensor readings (temperature, humidity, voltage) and publishes them over MQTT/TLS. |
-| `terraform-iot/main.tf` | Infrastructure as Code — provisions the DynamoDB table, IAM role (least-privilege, scoped to one table), Lambda function, and IoT topic rule in one `terraform apply`. |
-| `terraform-iot/lambda/lambda_function.py` | Lambda source deployed by Terraform — parses incoming telemetry JSON and writes it to DynamoDB. |
+| `terraform-iot/main.tf` | Infrastructure as Code. Provisions the DynamoDB table, IAM role (least-privilege, scoped to one table), Lambda function, and IoT topic rule in one `terraform apply`. |
+| `terraform-iot/lambda/lambda_function.py` | Lambda source deployed by Terraform. Parses incoming telemetry JSON and writes it to DynamoDB. |
 | `.gitignore` | Excludes certificates, private keys, and Terraform state from version control (see Security note below). |
 
 > **Note:** the manually-created Lambda source (used during initial console-based
@@ -86,7 +78,7 @@ Telemetry should begin appearing in the DynamoDB table within seconds.
 - **Terraform state files are excluded** since they can contain resource metadata and,
   depending on configuration, sensitive values.
 - The Lambda's IAM role in the Terraform version is scoped to `dynamodb:PutItem` on a
-  single table ARN — not the broader `AmazonDynamoDBFullAccess` managed policy used in
+  single table ARN, not the broader `AmazonDynamoDBFullAccess` managed policy used in
   the initial manual setup.
 
 ## Tech stack
