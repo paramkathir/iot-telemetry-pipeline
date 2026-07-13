@@ -1,0 +1,26 @@
+# --- Secrets: NEVER commit these ---
+certs/
+*.pem
+*.pem.crt
+*.pem.key
+*.key
+*.crt
+
+# --- Terraform ---
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+lambda_build/
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.vscode/
