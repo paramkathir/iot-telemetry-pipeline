@@ -19,6 +19,15 @@ X.509 device certificate and private key issued by AWS IoT Core, and validates A
 server certificate against the Amazon Root CA. An IoT policy scopes exactly what the
 device is allowed to do (`iot:Connect`, `iot:Publish` on a single topic).
 
+## Engineering decisions
+
+- **MQTT over mutual TLS:** uses a lightweight publish/subscribe protocol suited to edge telemetry while authenticating the device with an X.509 certificate instead of embedding credentials in application code.
+- **AWS IoT Core as the ingestion boundary:** separates device connectivity from downstream processing and routes matching telemetry through an IoT SQL rule.
+- **Lambda for event-driven processing:** the parser runs only when telemetry arrives, keeping the ingestion path serverless and avoiding a continuously running backend service.
+- **DynamoDB for telemetry storage:** stores readings using a device-and-time-oriented access pattern without requiring a database server to manage.
+- **Terraform for reproducibility:** provisions the DynamoDB table, IAM role and policy, Lambda function, and IoT rule as code instead of relying on manually recreated console configuration.
+- **Least-privilege access:** the Terraform-managed Lambda role is scoped to `dynamodb:PutItem` on the telemetry table rather than broad DynamoDB permissions.
+
 ## What's in this repo
 
 | Path | Purpose |
